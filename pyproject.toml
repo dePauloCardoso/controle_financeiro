@@ -1,0 +1,21 @@
+[project]
+name = "finances"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Paulo Cardoso",email = "cardosopaulohenrique91@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pandas (>=2.3.3,<3.0.0)",
+    "streamlit (>=1.52.1,<2.0.0)",
+    "gspread (>=6.2.1,<7.0.0)",
+    "google-auth (>=2.43.0,<3.0.0)",
+    "plotly (>=6.5.0,<7.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
