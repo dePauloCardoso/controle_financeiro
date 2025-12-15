@@ -115,7 +115,26 @@ def add_despesa(data, categoria, forma_pagamento, cartao, valor_total, num_parce
     # Adiciona cada parcela
     for i in range(num_parcelas):
         despesa_id = str(uuid.uuid4())[:8]
-        data_parcela = data + timedelta(days=30*i)  # Adiciona mês a mês
+
+        # CORREÇÃO: Adiciona meses corretamente ao invés de dias
+        # Calcula o novo mês e ano
+        mes_parcela = data.month + i
+        ano_parcela = data.year
+
+        # Ajusta ano se passar de 12 meses
+        while mes_parcela > 12:
+            mes_parcela -= 12
+            ano_parcela += 1
+
+        # Cria a data da parcela mantendo o mesmo dia
+        # Se o dia não existir no mês (ex: 31 em fevereiro), usa o último dia do mês
+        try:
+            data_parcela = data.replace(year=ano_parcela, month=mes_parcela)
+        except ValueError:
+            # Dia não existe no mês (ex: 31/02), usa último dia do mês
+            import calendar
+            ultimo_dia = calendar.monthrange(ano_parcela, mes_parcela)[1]
+            data_parcela = data.replace(year=ano_parcela, month=mes_parcela, day=ultimo_dia)
 
         # ORDEM CORRETA: ID | Data | Categoria | Forma_Pagamento | Cartao | Valor | Parcelas | Parcela_Atual | ID_Grupo_Parcelado | Descrição
         nova_linha = [
@@ -134,6 +153,7 @@ def add_despesa(data, categoria, forma_pagamento, cartao, valor_total, num_parce
         sheet.append_row(nova_linha)
 
     st.cache_data.clear()
+
 
 def get_dados_mensais():
     df_receitas = load_receitas()
