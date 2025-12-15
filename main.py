@@ -445,7 +445,7 @@ elif menu == "📋 Histórico":
             colunas_exibir = ['Data', 'Categoria', 'Tipo_Receita', 'Valor', 'Descrição']
             colunas_disponiveis = [col for col in colunas_exibir if col in df_receitas_display.columns]
 
-            st.dataframe(df_receitas_display[colunas_disponiveis], width='stretch', hide_index=True)
+            st.dataframe(df_receitas_display[colunas_disponiveis], use_container_width=True, hide_index=True)
 
             # Totais
             st.metric("💰 Total de Receitas", f"R$ {df_receitas['Valor'].sum():,.2f}")
@@ -463,7 +463,7 @@ elif menu == "📋 Histórico":
             colunas_exibir = ['Data', 'Categoria', 'Forma_Pagamento', 'Cartao', 'Valor', 'Parcela_Atual', 'Parcelas', 'Descrição']
             colunas_disponiveis = [col for col in colunas_exibir if col in df_despesas_display.columns]
 
-            st.dataframe(df_despesas_display[colunas_disponiveis], width='stretch', hide_index=True)
+            st.dataframe(df_despesas_display[colunas_disponiveis], use_container_width=True, hide_index=True)
 
             # Totais
             col1, col2 = st.columns(2)
