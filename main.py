@@ -625,33 +625,37 @@ elif menu == "📅 Projeção Mensal":
         receitas_por_mes[mes_formatado] = receitas_mes
         despesas_por_mes[mes_formatado] = despesas_mes
 
-    # Cria DataFrame transposto (meses como colunas)
+    # Cria DataFrame transposto (meses como colunas) COM SALDO ACUMULADO
     df_projecao = pd.DataFrame({
-        'Tipo': ['💵 Receitas', '💸 Despesas', '💰 Saldo'],
+        'Tipo': ['💵 Receitas', '💸 Despesas', '💰 Saldo do Mês', '📊 Saldo Acumulado'],
     })
+
+    # Variável para acumular o saldo
+    saldo_acumulado = 0
 
     # Adiciona cada mês como coluna
     for mes_formatado in receitas_por_mes.keys():
         receita = receitas_por_mes[mes_formatado]
         despesa = despesas_por_mes[mes_formatado]
-        saldo = receita - despesa
+        saldo_mes = receita - despesa
+        saldo_acumulado += saldo_mes  # Acumula o saldo
 
-        df_projecao[mes_formatado] = [receita, despesa, saldo]
+        df_projecao[mes_formatado] = [receita, despesa, saldo_mes, saldo_acumulado]
 
     # Adiciona coluna de totais
-    df_projecao['TOTAL'] = [
-        sum(receitas_por_mes.values()),
-        sum(despesas_por_mes.values()),
-        sum(receitas_por_mes.values()) - sum(despesas_por_mes.values())
-    ]
-
-    # Calcula totais
     total_receitas = sum(receitas_por_mes.values())
     total_despesas = sum(despesas_por_mes.values())
-    total_saldo = total_receitas - total_despesas
+    total_saldo_mes = total_receitas - total_despesas
+
+    df_projecao['TOTAL'] = [
+        total_receitas,
+        total_despesas,
+        total_saldo_mes,
+        saldo_acumulado  # Saldo acumulado final
+    ]
 
     # Métricas resumidas
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         st.metric("💵 Total Receitas (12 meses)", f"R$ {total_receitas:,.2f}")
@@ -660,8 +664,11 @@ elif menu == "📅 Projeção Mensal":
         st.metric("💸 Total Despesas (12 meses)", f"R$ {total_despesas:,.2f}")
 
     with col3:
-        st.metric("💰 Saldo Projetado (12 meses)", f"R$ {total_saldo:,.2f}", 
-                 delta=f"R$ {total_saldo:,.2f}")
+        st.metric("💰 Saldo Total (12 meses)", f"R$ {total_saldo_mes:,.2f}")
+
+    with col4:
+        st.metric("📊 Saldo Acumulado Final", f"R$ {saldo_acumulado:,.2f}", 
+                 delta=f"R$ {saldo_acumulado:,.2f}")
 
     st.divider()
 
@@ -687,6 +694,8 @@ elif menu == "📅 Projeção Mensal":
         }
     )
 
+    st.info("💡 **Saldo Acumulado:** Soma progressiva dos saldos mensais. O saldo de cada mês se acumula para o próximo.")
+
     st.divider()
 
     # Gráfico de projeção
@@ -696,7 +705,14 @@ elif menu == "📅 Projeção Mensal":
     meses_grafico = list(receitas_por_mes.keys())
     receitas_grafico = list(receitas_por_mes.values())
     despesas_grafico = list(despesas_por_mes.values())
-    saldo_grafico = [r - d for r, d in zip(receitas_grafico, despesas_grafico)]
+    saldo_mes_grafico = [r - d for r, d in zip(receitas_grafico, despesas_grafico)]
+
+    # Calcula saldo acumulado para o gráfico
+    saldo_acumulado_grafico = []
+    acumulado = 0
+    for saldo in saldo_mes_grafico:
+        acumulado += saldo
+        saldo_acumulado_grafico.append(acumulado)
 
     fig = go.Figure()
 
@@ -719,12 +735,23 @@ elif menu == "📅 Projeção Mensal":
     ))
 
     fig.add_trace(go.Scatter(
-        name='Saldo',
+        name='Saldo do Mês',
         x=meses_grafico,
-        y=saldo_grafico,
+        y=saldo_mes_grafico,
         mode='lines+markers',
-        line=dict(color='blue', width=3, dash='dash'),
-        marker=dict(size=8)
+        line=dict(color='blue', width=2, dash='dash'),
+        marker=dict(size=6)
+    ))
+
+    fig.add_trace(go.Scatter(
+        name='Saldo Acumulado',
+        x=meses_grafico,
+        y=saldo_acumulado_grafico,
+        mode='lines+markers',
+        line=dict(color='purple', width=3),
+        marker=dict(size=8),
+        fill='tonexty',
+        fillcolor='rgba(128, 0, 128, 0.1)'
     ))
 
     # Adiciona linha zero
