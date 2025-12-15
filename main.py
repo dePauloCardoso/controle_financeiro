@@ -180,7 +180,7 @@ st.title("💰 Controle Financeiro Pessoal")
 # Sidebar para navegação
 menu = st.sidebar.selectbox(
     "Menu",
-    ["📊 Dashboard", "➕ Nova Receita", "➖ Nova Despesa", "📋 Histórico", "⚙️ Configurações"]
+    ["📊 Dashboard", "📅 Projeção Mensal", "➕ Nova Receita", "➖ Nova Despesa", "📋 Histórico", "⚙️ Configurações"]
 )
 
 # Dashboard
@@ -583,3 +583,197 @@ Outro
         st.cache_resource.clear()
         st.success("✅ Cache limpo! Recarregando...")
         st.rerun()
+
+# Projeção Mensal
+elif menu == "📅 Projeção Mensal":
+    st.header("Projeção Mensal - Receitas e Despesas Futuras")
+
+    # Carrega dados
+    df_receitas = load_receitas()
+    df_despesas = load_despesas()
+
+    # Define período de análise (próximos 12 meses a partir do mês atual)
+    hoje = datetime.now()
+    meses_futuros = 12
+
+    # Cria lista de meses
+    lista_meses = []
+    for i in range(meses_futuros):
+        mes = hoje + timedelta(days=30*i)
+        lista_meses.append(mes.strftime('%Y-%m'))
+
+    # Prepara dados para a tabela transposta
+    receitas_por_mes = {}
+    despesas_por_mes = {}
+
+    for mes in lista_meses:
+        # Receitas do mês
+        if not df_receitas.empty and len(df_receitas) > 0:
+            receitas_mes = df_receitas[df_receitas['Data'].dt.strftime('%Y-%m') == mes]['Valor'].sum()
+        else:
+            receitas_mes = 0
+
+        # Despesas do mês
+        if not df_despesas.empty and len(df_despesas) > 0:
+            despesas_mes = df_despesas[df_despesas['Data'].dt.strftime('%Y-%m') == mes]['Valor'].sum()
+        else:
+            despesas_mes = 0
+
+        # Formata o mês para exibição
+        mes_formatado = datetime.strptime(mes, '%Y-%m').strftime('%b/%Y')
+
+        receitas_por_mes[mes_formatado] = receitas_mes
+        despesas_por_mes[mes_formatado] = despesas_mes
+
+    # Cria DataFrame transposto (meses como colunas)
+    df_projecao = pd.DataFrame({
+        'Tipo': ['💵 Receitas', '💸 Despesas', '💰 Saldo'],
+    })
+
+    # Adiciona cada mês como coluna
+    for mes_formatado in receitas_por_mes.keys():
+        receita = receitas_por_mes[mes_formatado]
+        despesa = despesas_por_mes[mes_formatado]
+        saldo = receita - despesa
+
+        df_projecao[mes_formatado] = [receita, despesa, saldo]
+
+    # Adiciona coluna de totais
+    df_projecao['TOTAL'] = [
+        sum(receitas_por_mes.values()),
+        sum(despesas_por_mes.values()),
+        sum(receitas_por_mes.values()) - sum(despesas_por_mes.values())
+    ]
+
+    # Calcula totais
+    total_receitas = sum(receitas_por_mes.values())
+    total_despesas = sum(despesas_por_mes.values())
+    total_saldo = total_receitas - total_despesas
+
+    # Métricas resumidas
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric("💵 Total Receitas (12 meses)", f"R$ {total_receitas:,.2f}")
+
+    with col2:
+        st.metric("💸 Total Despesas (12 meses)", f"R$ {total_despesas:,.2f}")
+
+    with col3:
+        st.metric("💰 Saldo Projetado (12 meses)", f"R$ {total_saldo:,.2f}", 
+                 delta=f"R$ {total_saldo:,.2f}")
+
+    st.divider()
+
+    # Tabela de projeção transposta
+    st.subheader("📊 Tabela de Projeção Mensal")
+
+    # Formata valores para exibição
+    df_projecao_display = df_projecao.copy()
+
+    # Formata todas as colunas numéricas
+    for col in df_projecao_display.columns:
+        if col != 'Tipo':
+            df_projecao_display[col] = df_projecao_display[col].apply(lambda x: f"R$ {x:,.2f}")
+
+    # Exibe tabela com estilo
+    st.dataframe(
+        df_projecao_display,
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "Tipo": st.column_config.TextColumn("", width="small"),
+            "TOTAL": st.column_config.TextColumn("TOTAL", width="medium")
+        }
+    )
+
+    st.divider()
+
+    # Gráfico de projeção
+    st.subheader("📈 Gráfico de Projeção")
+
+    # Prepara dados para o gráfico (sem a coluna TOTAL)
+    meses_grafico = list(receitas_por_mes.keys())
+    receitas_grafico = list(receitas_por_mes.values())
+    despesas_grafico = list(despesas_por_mes.values())
+    saldo_grafico = [r - d for r, d in zip(receitas_grafico, despesas_grafico)]
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(
+        name='Receitas',
+        x=meses_grafico,
+        y=receitas_grafico,
+        mode='lines+markers',
+        line=dict(color='green', width=3),
+        marker=dict(size=8)
+    ))
+
+    fig.add_trace(go.Scatter(
+        name='Despesas',
+        x=meses_grafico,
+        y=despesas_grafico,
+        mode='lines+markers',
+        line=dict(color='red', width=3),
+        marker=dict(size=8)
+    ))
+
+    fig.add_trace(go.Scatter(
+        name='Saldo',
+        x=meses_grafico,
+        y=saldo_grafico,
+        mode='lines+markers',
+        line=dict(color='blue', width=3, dash='dash'),
+        marker=dict(size=8)
+    ))
+
+    # Adiciona linha zero
+    fig.add_hline(y=0, line_dash="dot", line_color="gray", opacity=0.5)
+
+    fig.update_layout(
+        height=500,
+        xaxis_title="Mês",
+        yaxis_title="Valor (R$)",
+        hovermode='x unified',
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Detalhamento por categoria (opcional)
+    with st.expander("🔍 Ver Detalhamento por Categoria"):
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.write("**Receitas por Categoria (próximos 12 meses)**")
+            if not df_receitas.empty and len(df_receitas) > 0:
+                df_receitas_futuras = df_receitas[df_receitas['Data'] >= hoje]
+                if not df_receitas_futuras.empty:
+                    receitas_cat = df_receitas_futuras.groupby('Categoria')['Valor'].sum().reset_index()
+                    receitas_cat = receitas_cat.sort_values('Valor', ascending=False)
+                    receitas_cat['Valor'] = receitas_cat['Valor'].apply(lambda x: f"R$ {x:,.2f}")
+                    st.dataframe(receitas_cat, use_container_width=True, hide_index=True)
+                else:
+                    st.info("Nenhuma receita futura cadastrada")
+            else:
+                st.info("Nenhuma receita cadastrada")
+
+        with col2:
+            st.write("**Despesas por Categoria (próximos 12 meses)**")
+            if not df_despesas.empty and len(df_despesas) > 0:
+                df_despesas_futuras = df_despesas[df_despesas['Data'] >= hoje]
+                if not df_despesas_futuras.empty:
+                    despesas_cat = df_despesas_futuras.groupby('Categoria')['Valor'].sum().reset_index()
+                    despesas_cat = despesas_cat.sort_values('Valor', ascending=False)
+                    despesas_cat['Valor'] = despesas_cat['Valor'].apply(lambda x: f"R$ {x:,.2f}")
+                    st.dataframe(despesas_cat, use_container_width=True, hide_index=True)
+                else:
+                    st.info("Nenhuma despesa futura cadastrada")
+            else:
+                st.info("Nenhuma despesa cadastrada")
