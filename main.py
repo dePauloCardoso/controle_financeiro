@@ -299,35 +299,35 @@ if menu == "📊 Dashboard":
         else:
             st.info("Nenhuma despesa cadastrada ainda")
 
-    # Gráficos adicionais
-    col1, col2 = st.columns(2)
+    # # Gráficos adicionais
+    # col1, col2 = st.columns(2)
 
-    with col1:
-        st.subheader("💵 Receitas: Fixas vs Variáveis")
-        if not df_receitas.empty and len(df_receitas) > 0 and 'Tipo_Receita' in df_receitas.columns:
-            receitas_tipo = df_receitas.groupby('Tipo_Receita')['Valor'].sum().reset_index()
-            if not receitas_tipo.empty:
-                fig_tipo = px.bar(receitas_tipo, x='Tipo_Receita', y='Valor',
-                                 color='Tipo_Receita',
-                                 color_discrete_map={'Fixa': 'darkgreen', 'Variável': 'lightgreen'})
-                st.plotly_chart(fig_tipo, use_container_width=True)
-            else:
-                st.info("Adicione receitas para visualizar")
-        else:
-            st.info("Adicione receitas para visualizar")
+    # with col1:
+    #     st.subheader("💵 Receitas: Fixas vs Variáveis")
+    #     if not df_receitas.empty and len(df_receitas) > 0 and 'Tipo_Receita' in df_receitas.columns:
+    #         receitas_tipo = df_receitas.groupby('Tipo_Receita')['Valor'].sum().reset_index()
+    #         if not receitas_tipo.empty:
+    #             fig_tipo = px.bar(receitas_tipo, x='Tipo_Receita', y='Valor',
+    #                              color='Tipo_Receita',
+    #                              color_discrete_map={'Fixa': 'darkgreen', 'Variável': 'lightgreen'})
+    #             st.plotly_chart(fig_tipo, use_container_width=True)
+    #         else:
+    #             st.info("Adicione receitas para visualizar")
+    #     else:
+    #         st.info("Adicione receitas para visualizar")
 
-    with col2:
-        st.subheader("💳 Despesas por Forma de Pagamento")
-        if not df_despesas.empty and len(df_despesas) > 0 and 'Forma_Pagamento' in df_despesas.columns:
-            despesas_forma = df_despesas.groupby('Forma_Pagamento')['Valor'].sum().reset_index()
-            if not despesas_forma.empty:
-                fig_forma = px.pie(despesas_forma, values='Valor', names='Forma_Pagamento',
-                                  color_discrete_sequence=px.colors.sequential.Oranges_r)
-                st.plotly_chart(fig_forma, use_container_width=True)
-            else:
-                st.info("Adicione despesas para visualizar")
-        else:
-            st.info("Adicione despesas para visualizar")
+    # with col2:
+    #     st.subheader("💳 Despesas por Forma de Pagamento")
+    #     if not df_despesas.empty and len(df_despesas) > 0 and 'Forma_Pagamento' in df_despesas.columns:
+    #         despesas_forma = df_despesas.groupby('Forma_Pagamento')['Valor'].sum().reset_index()
+    #         if not despesas_forma.empty:
+    #             fig_forma = px.pie(despesas_forma, values='Valor', names='Forma_Pagamento',
+    #                               color_discrete_sequence=px.colors.sequential.Oranges_r)
+    #             st.plotly_chart(fig_forma, use_container_width=True)
+    #         else:
+    #             st.info("Adicione despesas para visualizar")
+    #     else:
+    #         st.info("Adicione despesas para visualizar")
 
     # Despesas por cartão (apenas crédito)
     if not df_despesas.empty and len(df_despesas) > 0 and 'Cartao' in df_despesas.columns:
