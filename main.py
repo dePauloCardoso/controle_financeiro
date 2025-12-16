@@ -703,9 +703,50 @@ elif menu == "📅 Projeção Mensal":
         if col != 'Tipo':
             df_projecao_display[col] = df_projecao_display[col].apply(lambda x: f"R$ {x:,.2f}")
 
+    # Aplica estilo customizado com cores condicionais
+    def style_table(row):
+        styles = []
+        for idx, val in enumerate(row):
+            # Coluna Tipo (primeira coluna)
+            if idx == 0:
+                if row['Tipo'] == '📊 Saldo Acumulado':
+                    styles.append('background-color: #1e293b; color: white; font-weight: bold')
+                else:
+                    styles.append('')
+            else:
+                # Colunas de valores
+                if row['Tipo'] == '📊 Saldo Acumulado':
+                    # Remove formatação para comparar
+                    valor_str = str(val).replace('R$', '').replace('.', '').replace(',', '.').strip()
+                    try:
+                        valor = float(valor_str)
+                        if valor >= 0:
+                            styles.append('background-color: #1e293b; color: #10b981; font-weight: bold')  # Verde
+                        else:
+                            styles.append('background-color: #1e293b; color: #ef4444; font-weight: bold')  # Vermelho
+                    except:
+                        styles.append('background-color: #1e293b; color: white; font-weight: bold')
+                elif row['Tipo'] == '💰 Saldo do Mês':
+                    # Aplica cor no saldo do mês também
+                    valor_str = str(val).replace('R$', '').replace('.', '').replace(',', '.').strip()
+                    try:
+                        valor = float(valor_str)
+                        if valor >= 0:
+                            styles.append('color: #10b981; font-weight: normal')  # Verde
+                        else:
+                            styles.append('color: #ef4444; font-weight: normal')  # Vermelho
+                    except:
+                        styles.append('')
+                else:
+                    styles.append('')
+        return styles
+
+    # Aplica o estilo
+    styled_df = df_projecao_display.style.apply(style_table, axis=1)
+
     # Exibe tabela com estilo
     st.dataframe(
-        df_projecao_display,
+        styled_df,
         use_container_width=True,
         hide_index=True,
         column_config={
