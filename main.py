@@ -616,11 +616,21 @@ elif menu == "📅 Projeção Mensal":
     hoje = datetime.now()
     meses_futuros = 12
 
-    # Cria lista de meses
+    # Cria lista de meses CORRETAMENTE
     lista_meses = []
     for i in range(meses_futuros):
-        mes = hoje + timedelta(days=30*i)
-        lista_meses.append(mes.strftime('%Y-%m'))
+        # Calcula o mês corretamente
+        mes_atual = hoje.month + i
+        ano_atual = hoje.year
+
+        # Ajusta ano se passar de 12 meses
+        while mes_atual > 12:
+            mes_atual -= 12
+            ano_atual += 1
+
+        # Formata como YYYY-MM
+        mes_str = f"{ano_atual}-{mes_atual:02d}"
+        lista_meses.append(mes_str)
 
     # Prepara dados para a tabela transposta
     receitas_por_mes = {}
@@ -758,6 +768,9 @@ elif menu == "📅 Projeção Mensal":
     st.info("💡 **Saldo Acumulado:** Soma progressiva dos saldos mensais. O saldo de cada mês se acumula para o próximo.")
 
     st.divider()
+
+    # ... resto do código continua igual ...
+
 
     # Gráfico de projeção
     st.subheader("📈 Gráfico de Projeção")
